@@ -23,12 +23,14 @@ async def register(body: RegisterRequest):
         result = supabase.auth.sign_up({"email": body.email, "password": body.password})
         if not result.user:
             raise HTTPException(status_code=400, detail="Registration failed")
+        # 이메일 인증 없이 즉시 사용 가능하도록 자동 확인 처리
+        supabase.auth.admin.update_user_by_id(result.user.id, {"email_confirm": True})
         supabase.table("operators").insert({
             "id": result.user.id,
             "email": body.email,
             "name": body.name,
         }).execute()
-        return {"message": "Registration successful. Please check your email to verify."}
+        return {"message": "Registration successful."}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
